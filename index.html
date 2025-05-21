@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat IA con OpenAI</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background-color: #343541;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .model-selector {
+      margin-top: 0.5rem;
+      background-color: #444654;
+      border: none;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 5px;
+    }
+
+    #chat-container {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .message {
+      background-color: #e1e1e1;
+      padding: 0.75rem;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background-color: #d1e7dd;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      background-color: #f8d7da;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 1rem;
+      background-color: #fff;
+      border-top: 1px solid #ccc;
+    }
+
+    #input-area input {
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #input-area button {
+      margin-left: 0.5rem;
+      padding: 0.75rem 1rem;
+      background-color: #343541;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #input-area button:hover {
+      background-color: #202123;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chat con OpenAI</h1>
+    <select class="model-selector" id="modelSelector">
+      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+      <option value="gpt-4">GPT-4</option>
+    </select>
+  </header>
+
+  <div id="chat-container">
+    <div class="message bot">Hola, soy tu asistente IA. ¿En qué puedo ayudarte?</div>
+  </div>
+
+  <div id="input-area">
+    <input type="text" id="userInput" placeholder="Escribe tu mensaje..." />
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+
+  <script>
+    const apiKey = "TU_CLAVE_SECRETA_AQUI"; // ← Reemplaza esto con tu clave real
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      const chatContainer = document.getElementById("chat-container");
+
+      // Mostrar mensaje del usuario
+      const userMessage = document.createElement("div");
+      userMessage.className = "message user";
+      userMessage.textContent = message;
+      chatContainer.appendChild(userMessage);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      input.value = "";
+
+      const selectedModel = document.getElementById("modelSelector").value;
+
+      // Crear mensaje "pensando..."
+      const botMessage = document.createElement("div");
+      botMessage.className = "message bot";
+      botMessage.textContent = "Pensando...";
+      chatContainer.appendChild(botMessage);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/ai-chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [{ role: "user", content: message }],
+            temperature: 0.7
+          })
+        });
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content || "Sin respuesta";
+
+        botMessage.textContent = reply;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      } catch (error) {
+        botMessage.textContent = "Error al conectar con OpenAI.";
+        console.error("Error:", error);
+      }
+    }
+  </script>
+</body>
+</html>
